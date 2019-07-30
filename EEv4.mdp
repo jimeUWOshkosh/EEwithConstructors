@@ -1,0 +1,263 @@
+%title: Economic Exchange With Moose Constructors
+%author: James Edwards
+%date: 2019-07-29
+
+-> Ovid/Tau Station : Slide 1 <-
+=========
+
+
+At The Perl Conference 2017 in Washington DC, Curtis Poe gave a talk
+titled [Modeling a Universe in Perl](http://www.perlconference.us/tpc-2017-dc/talks/#modeling_a_universe_in_perl)
+  [Video](https://www.youtube.com/watch?v=UmLwYLSmTSs)
+
+  Declarative Perl
+    Series of Steps in Subject Verb Object Structure
+      Iterates over each of the steps in succession, and if any of them fail,
+      all changes are discarded and the failed transaction is logged. If all
+      of the steps succeed, every object which was updated is then stored in
+      the database and we log a successful transaction.
+
+
+    08        Steps(
+    09               topic_areaX( recipient => verb   => object ),
+    10               topic_areaX( recipient => verb   => object ),
+    11               topic_areaX( recipient => verb   => object ),
+    12       ),
+
+The 'topic_area' is a class and the SVO arguments help to build the instance.
+
+-------------------------------------------------
+
+-> # Tau Station code tease : Slide 2 <-
+
+
+
+*code snippet*  Visit a clone vat and gestated a new clone 
+
+    01 sub purchase_clone {
+    02   my ($self) = @_;
+    03
+    04   my $succeeded = $self->new_exchange(
+    05        slug            => 'purchase-clone',
+    06        success_message => 'You have purchased a new clone',
+    07        failure_message => 'You could not purchase a new clone',
+    08        Steps(
+    09                  Location( $self      => is_in_area   => 'clonevat'              ),
+    10                  Wallet(   $self      => pay          => $self->price('cloning') ),
+    11                  Clone(    $self      => gestate      => $self->station_area     ),
+    12        ),
+    13   );
+    14 }
+
+-------------------------------------------------
+
+-> # Tau Station code tease continue : Slide 3 <-
+
+
+
+Addition information about Ovid's Economic Exchange
+
+    08        Steps(
+    09                  Location( $self      => is_in_area   => 'clonevat'              ),
+    10                  Wallet(   $self      => pay          => $self->price('cloning') ),
+    11                  Clone(    $self      => gestate      => $self->station_area     ),
+    12        ),
+
+Ovid
+   *Steps* is actually a constructor which takes a list of economic action 
+   objects. 
+
+   'Assets' are constructors
+      *Wallet* is a constructor for a Veure::Economy::Asset::Wallet instance
+
+
+-------------------------------------------------
+
+-> # An important issue to think out : Slide 4 <-
+
+    01 Purchase_Stuff_From_Game_Crafter(
+    02   'arg1',
+    03   'arg2',
+    04   Steps(
+    05               two( one('stuff')),
+    06               four(three('more stuff')),
+    07   ),
+    08 );
+*========================================================*
+
+If *Steps* is a subroutine, subroutines *two* and *four*
+would be excuted and *Steps* would get an array of EXPRs
+[ void content, scalar, list ]
+
+Also if the arguments to subroutines *two* and *four* were subroutine(s)/methods,
+they would be executed before *Steps* would be executed.
+
+You want to control if and when subroutines/steps are to be excuted.
+
+Check out prototypes/t10.pl in the source code archive.
+
+I'll pass references of anonymous subroutines for the steps of the Economic Exchange.
+The steps are really *states* of a *State Machine*.
+  sub { ... },      # is a ref to a subroutine
+
+-------------------------------------------------
+
+-> # Source Filter : Slide 5 <-
+
+
+
+ *jimE's source filter (lib/myfilter.pm) rules*
+
+We're keeping this simple
+
+1) Each step is defined on a single line in the original source.
+    (probably have to change PerlTidy for 80+ character lines)
+
+2) If an exception is caught, just gonna rethrow it!
+     die $@; # rethrow
+   Yes, I do use exceptions for flow control when 
+     a) A Bad Assertion behavior is made, still need to log all other
+        steps and their arguments
+     b) A Bad Failure/Always behavior is made, still need to log all other
+        steps and their arguments
+
+3) Your project needs to create it's own begin, end and rollback transaction subroutines.
+
+4) 'Steps' should be the last argument of a subroutine/method call.
+   I haven't tested if it is not.
+
+
+-------------------------------------------------
+
+->  Will Handle *Behaviors* : Slide 6  <-
+
+
+
+    my $succeeded = $self->new_exchange(
+      'arg1',
+      Steps(
+         ASSERT(  Location( $self      => is_in_area  => 'clonevat'              ) ),
+                  Wallet(   $self      => pay         => $self->price('cloning') ),
+                  Clone(    $self      => gestate     => $self->station_area     ),
+         FAILURE( Wallet(   $character => remove      => $bet_amount ) ),
+         ALWAYS(  Wallet( $character => 'show_balance') ),
+      ),
+   );
+
+*========================================================*
+I like Ovid's optional 'behavior' attributes. 
+
+-------------------------------------------------
+
+->  Behaviors : Slide 7  <-
+
+
+
+Stolen from Curtis 'Ovid' Poe
+
+Posted on April 20, 2018
+[Extending Economic Exchange Conditions](https://blog.taustation.space/blog/extending-economic-exchange-conditions/)
+
+These behaviors alter the flow of steps:
+
+*ASSERT*  – If this step fails, do not call any other steps for any reason.
+*ALWAYS*  – Always run this step (unless an ASSERT was previously failed).
+*FAILURE* – Run this step if any earlier step failed (unless an ASSERT was 
+          previously failed).
+
+Note: For this 'proof of concept', the behavior ASSERTions are the first
+      N number of arguments to *Steps*.
+
+-------------------------------------------------
+
+->  Use the Template For Your Coding  : Slide 8  <-
+
+
+Otherwise your amount of chanting will increase.
+
+AND
+
+You will be spending time in the debugger to see what the source filter created.
+
+
+ex: 
+    perl -d  run.pl
+    f lib/PurchaseClones.pm
+    |  l 1-400
+
+*========================================================*
+Source code has a 'templates' directory.
+
+-------------------------------------------------
+
+->  Anonymous Subroutines Revisited   : Slide 9  <-
+
+
+
+Purchase_Stuff_From_Game_Crafter( 
+      'arg1',
+      'arg2', 
+      Steps(
+            ALWAYS(  Wallet(   $character => 'show_balance') ),
+      ),
+);
+
+*Turns into*
+
+Purchase_Stuff_From_Game_Crafter( 
+      'arg1',
+      'arg2', 
+      STEPS (
+        [ 'ALWAYS', sub { Steps::Wallet(   $character => 'show_balance')  }, ],
+      ),
+);
+
+
+-------------------------------------------------
+
+->  Ovid's Communications on the topic (if you choose to drink the Kool-Aid)  : Slide 10 <-
+
+
+
+Posted on December 15, 2016 [The Tau Station Universe: Software](https://blog.taustation.space/blog/the-tau-station-universe-software/)
+
+Posted on April 20, 2017    [On writing clean code](https://blog.taustation.space/blog/on-writing-clean-code/)
+
+Posted on June 13, 2017     [Writing Declarative Perl](http://blogs.perl.org/users/ovid/2017/06/writing-declarative-perl.html)
+
+Posted on February 8, 2018  [On writing clean code … for combat](https://blog.taustation.space/blog/on-writing-clean-code-for-combat/)
+
+Posted on April 20, 2018    [Extending Economic Exchange Conditions](https://blog.taustation.space/blog/extending-economic-exchange-conditions/)
+
+[Modeling a Universe in Perl](http://www.perlconference.us/tpc-2017-dc/talks/#modeling_a_universe_in_perl)
+[Video](https://www.youtube.com/watch?v=UmLwYLSmTSs)
+
+-------------------------------------------------
+
+-> A *'Modeling a Universe'* update : Slide 11  <-
+
+
+At the Swiss Perl WorkShop 2018, Mr. Poe presentation:
+
+0) Did not mention Behaviors
+
+1) He said Tau Station does not do any logging
+
+   BUT
+
+   Any Economic Exchange that fails, creates a 'Error Report' of the entire 'Steps' call
+   with fields filled in instead of variable names.
+      [ Day 1, 41st minute ]
+
+-------------------------------------------------
+
+-> The End. <-
+
+
+
+Purchase Mr. Curtis Poe's Books
+
+
+Modules used
+  Moose                 
+  Filter::Util::Call
