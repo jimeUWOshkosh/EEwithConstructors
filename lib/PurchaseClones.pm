@@ -19,7 +19,12 @@ sub new_exchange {
        $failuresmsg, $failuresmsgtxt,
        $steps) = @_;
    say $steps->rc;
-   say $steps->trans_mesg;
+
+# to work in cohort with Steps::$TESTING
+#
+#   say $steps->trans_mesg
+#
+
    return PurchaseClones->new();
 }
 

@@ -18,18 +18,19 @@ use Exporter qw(import);
 
 our @EXPORT = qw(Area Clone Event Inventory Location Stats Wallet);
 
-has 'rc' => (
+has 'rc' => (             # Return Code of a step
     is  => 'rw',
     isa => 'Int',
 );
-has 'trans_mesg' => (
+has 'trans_mesg' => (    # ErrorLog message about the Economic Exchange transaction
     is  => 'rw',
     isa => 'Str',
 );
 
-my @procedures; # steps to be performed
-my @touched;    # steps that have been attempted
-my $perform = 1;
+my  @procedures;   # steps to be performed in the Economic Exchange
+my  @touched;      # logs the steps that have been attempted
+my  $perform = 1;  # a valid Economic Exchange is still ongoing
+our $TESTING =1;   # for testing Ovid type ErrorLog
 
 around BUILDARGS => sub {
     my $orig = shift;
@@ -116,15 +117,17 @@ sub _steps {
          }
        }
      }
-     # FAILURES need to be logged
-     $perform=0;
-     while (my ($j,$step) = each @steps) {
-       next if ($touched[$j]);
-       $obj = $step->[1]();
-       ouch 'No object returned', 'No object returned' if (not $obj);
-       $touched[$j]=$obj->arg_text;
+     if ($TESTING) {
+       # FAILURES need to be logged
+       $perform=0;
+       while (my ($j,$step) = each @steps) {
+         next if ($touched[$j]);
+         $obj = $step->[1]();
+         ouch 'No object returned', 'No object returned' if (not $obj);
+         $touched[$j]=$obj->arg_text;
+       }
+       $perform=1;
      }
-     $perform=1;
      end_trans();
      1;
    } or do {

@@ -44,15 +44,15 @@ around BUILDARGS => sub {
             ouch 'Bad SVO syntax', 'Bad SVO syntax';
         } elsif ( scalar(@_) == 2 ) {
             my ($subject,$verb) = @_;
-            my $str = 'Wallet ( ' .  blessed($subject)  .  ', ' .  $verb .
+            my $str = 'Wallet ( ' .  blessed($subject)  .  ' => ' .  $verb .
                       " ),\n";
             $rc = ($perform) ? process() : 0;
             $obj = $class->$orig( subject => $subject, verb     => $verb, 
                                   arg_text => $str,    rc       => $rc   );
         } elsif ( scalar(@_) == 3 ) {
             my ($subject,$verb,$object) = @_;
-            my $str = 'Wallet ( ' .  blessed($subject)  .  ', ' .  $verb .
-                      ', '       .  $object             .  " ),\n";
+            my $str = 'Wallet ( ' .  blessed($subject)  .  ' => ' .  $verb .
+                      ' => '      .  $object            .  " ),\n";
             $rc = ($perform) ? process() : 0;
             $obj = $class->$orig( subject => $subject, verb     => $verb, 
                                   object  => $object,  arg_text => $str,

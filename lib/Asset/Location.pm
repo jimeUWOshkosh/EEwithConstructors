@@ -38,8 +38,8 @@ around BUILDARGS => sub {
             ouch 'Bad SVO syntax', 'Bad SVO syntax';
         } elsif ( scalar(@_) == 3 ) {
             my ($subject,$verb,$object) = @_;
-            my $str = 'Location ( ' .  blessed($subject)  .  ', ' .  $verb .
-                      ', '       .  $object            .  " ),\n";
+            my $str = 'Location ( ' .  blessed($subject)  .  ' => ' .  $verb .
+                      ' => '        .  $object            .  " ),\n";
             $rc = process($obj) if ($perform);
             $obj = $class->$orig( subject => $subject, verb     => $verb, 
                                   object  => $object,  arg_text => $str,

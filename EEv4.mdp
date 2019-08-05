@@ -117,9 +117,9 @@ We're keeping this simple
      die $@; # rethrow
    Yes, I do use exceptions for flow control when 
      a) A Bad Assertion behavior is made, still need to log all other
-        steps and their arguments
+        steps and their arguments for Ovid type ErrorLog
      b) A Bad Failure/Always behavior is made, still need to log all other
-        steps and their arguments
+        steps and their arguments for Ovid type ErrorLog
 
 3) Your project needs to create it's own begin, end and rollback transaction subroutines.
 
