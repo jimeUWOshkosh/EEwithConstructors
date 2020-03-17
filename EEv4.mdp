@@ -89,10 +89,10 @@ If *Steps* is a subroutine, subroutines *two* and *four*
 would be excuted and *Steps* would get an array of EXPRs
 [ void content, scalar, list ]
 
-Also if the arguments to subroutines *two* and *four* were subroutine(s)/methods,
-they would be executed before *Steps* would be executed.
+Also if the arguments to subroutines *two* and *four* were subroutine(s),
+they are going to be executed before *Steps* would be executed.
 
-You want to control if and when subroutines/steps are to be excuted.
+You want to control if and when the 'steps' are to be excuted.
 
 Check out prototypes/t10.pl in the source code archive.
 
@@ -142,7 +142,7 @@ We're keeping this simple
          FAILURE( Wallet(   $character => remove      => $bet_amount ) ),
          ALWAYS(  Wallet( $character => 'show_balance') ),
       ),
-   );
+    );
 
 *========================================================*
 I like Ovid's optional 'behavior' attributes. 
@@ -192,13 +192,15 @@ Source code has a 'templates' directory.
 
 ->  Anonymous Subroutines Revisited   : Slide 9  <-
 
-
-
 Purchase_Stuff_From_Game_Crafter( 
       'arg1',
       'arg2', 
       Steps(
-            ALWAYS(  Wallet(   $character => 'show_balance') ),
+                  Location( $self      => is_in_area  => 'clonevat'              ),
+                  Wallet(   $self      => pay         => $self->price('cloning') ),
+                  Clone(    $self      => gestate     => $self->station_area     ),
+         FAILURE( Wallet(   $character => remove      => $bet_amount ) ),
+         ALWAYS(  Wallet(   $character => 'show_balance') ),
       ),
 );
 
@@ -208,10 +210,12 @@ Purchase_Stuff_From_Game_Crafter(
       'arg1',
       'arg2', 
       STEPS (
-        [ 'ALWAYS', sub { Steps::Wallet(   $character => 'show_balance')  }, ],
-      ),
+   	  [ undef,     sub { Steps::Location( $self      => is_in_area  => 'clonevat'              ) }, ],
+   	  [ undef,     sub { Steps::Wallet(   $self      => pay         => $self->price('cloning') ) }, ],
+   	  [ undef,     sub { Steps::Clone(    $self      => gestate     => $self->station_area     ) }, ],
+   	  [ 'FAILURE', sub { Steps::Wallet(   $character => remove      => $bet_amount )             }, ],
+   	  [ 'ALWAYS',  sub { Steps::Wallet(   $character => 'show_balance')                          }, ],
 );
-
 
 -------------------------------------------------
 
